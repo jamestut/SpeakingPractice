@@ -369,6 +369,7 @@ function createDownloadLink(blob) {
         if (data.RecognitionStatus == "Success") {
             wordrow.innerHTML = phonemerow.innerHTML = scorerow.innerHTML = '';
             omittedwords = insertedwords = '';
+            wordsomitted.innerHTML = wordsinserted.innerHTML = '';
             fillData(data.NBest[0]);
             document.getElementById("recordloader").style.display = "none";
             document.getElementById("metrics").style.display = "block";
