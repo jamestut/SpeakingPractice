@@ -6,6 +6,9 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
     text-align: center;
 }
+#reftextform {
+    text-align: center;
+}
 .container {
     margin-left:auto; 
     align-items: center;
@@ -40,7 +43,7 @@ textarea{
     background-color: #f8f8f8;
     text-align: left;
     font-family: Arial, Helvetica, sans-serif;
-    resize: none;
+    resize: vertical;
 }
 .button-container {
     width: 100%;
