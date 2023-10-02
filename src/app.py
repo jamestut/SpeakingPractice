@@ -1,13 +1,8 @@
 import requests
 import base64
 import os
-import json
-import time
-import random
 import subprocess
-import azure.cognitiveservices.speech as speechsdk
 
-from threading import Lock
 from flask import Flask, jsonify, render_template, request, make_response
 
 app = Flask(__name__)
@@ -23,7 +18,6 @@ avs_rate_slow = int(os.environ.get('AVS_RATE_SLOW', '50'))
 # value: (slow mode, text data)
 # key: hash of the value
 avs_cache = {}
-avs_cache_lock = Lock()
 
 @app.route("/")
 def index():
