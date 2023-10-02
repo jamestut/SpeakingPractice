@@ -7,7 +7,7 @@ from flask import Flask, jsonify, render_template, request, make_response
 
 app = Flask(__name__)
 
-language = os.environ.get('AZURE_SPEECH_LANG') or "en-AU"
+language = os.environ.get('AZURE_SPEECH_LANG') or "en-US"
 subscription_key = os.environ['AZURE_SUBS_KEY']
 region = os.environ['AZURE_REGION']
 avs_work_dir = os.environ['AVS_WORK_DIR']
