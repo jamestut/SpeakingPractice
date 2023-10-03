@@ -2,6 +2,7 @@ import requests
 import base64
 import os
 import subprocess
+import json
 
 from flask import Flask, jsonify, render_template, request, make_response
 
@@ -54,7 +55,14 @@ def ackaud():
 
     # build pronunciation assessment parameters
     referenceText = reftext
-    pronAssessmentParamsJson = "{\"ReferenceText\":\"%s\",\"GradingSystem\":\"HundredMark\",\"Dimension\":\"Comprehensive\",\"EnableMiscue\":\"True\"}" % referenceText
+    pronAssessmentParamsJson = json.dumps(
+        {
+            "ReferenceText": referenceText,
+            "GradingSystem": "HundredMark",
+            "Dimension": "Comprehensive",
+            "EnableMiscue": True
+        }
+    )
     pronAssessmentParamsBase64 = base64.b64encode(bytes(pronAssessmentParamsJson, 'utf-8'))
     pronAssessmentParams = str(pronAssessmentParamsBase64, "utf-8")
 
