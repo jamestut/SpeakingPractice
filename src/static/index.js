@@ -19,8 +19,8 @@ var formcontainer = document.getElementById('formcontainer');
 var hbutton = document.getElementById('buttonhear');
 var recordingsList = document.getElementById('recordingsList');
 var ttsList = document.getElementById('ttsList');
-var hearingAudio = document.getElementById('hearingAudio');
-var lastgettstext;
+var reftextAudio = document.getElementById('reftextAudio');
+var wordAudio = document.createElement('audio');
 var objectUrlMain;
 var wordaudiourls = new Array;
 
@@ -32,9 +32,8 @@ var phthreshold4 = 20;
 var AudioContext = window.AudioContext || window.webkitAudioContext;;
 var audioContent;
 var start = false;
-var ttsActive = false;
 var permission = false;
-var reftextval;
+var reftextvalPrevious;
 var gumStream; 						//stream from getUserMedia()
 var rec; 							//Recorder.js object
 var audioStream; 					//MediaStreamAudioSourceNode we'll be recording
@@ -71,12 +70,6 @@ function gettoken() {
 }
 
 function playwordind(word) {
-    let endingFunction = function () {
-        hearingAudio.src = objectUrlMain;
-        hearingAudio.autoplay = false;
-        hearingAudio.removeEventListener("ended", endingFunction);
-    };
-
     var request = new XMLHttpRequest();
     request.open('POST', '/getttsforword', true);
     request.responseType = "blob";
@@ -85,10 +78,8 @@ function playwordind(word) {
         var blobpronun = request.response;
         var objectUrl = URL.createObjectURL(blobpronun);
 
-        hearingAudio.src = objectUrl;
-        hearingAudio.play();
-
-        hearingAudio.addEventListener("ended", endingFunction);
+        wordAudio.src = objectUrl;
+        wordAudio.play();
     }
 
     const dat = new FormData();
@@ -97,34 +88,9 @@ function playwordind(word) {
     request.send(dat);
 }
 
-reftext.onclick = function () { handleWordClick() };
-reftext.onchange = function () {
-    ttsActive = false;
-    updateHbuttonText();
-};
-
 function handleWordClick() {
-    if (!ttsActive) {
-        return;
-    }
-
-    const activeTextarea = document.activeElement;
-    var k = activeTextarea.selectionStart;
-
-    reftextval = reftext.value;
-    wordlist = reftextval.split(" ");
-
-    var c = 0;
-    var i = 0;
-    for (i = 0; i < wordlist.length; i++) {
-        c += wordlist[i].length;
-        if (c >= k) {
-            playwordind(wordlist[i]);
-            break;
-        }
-        c += 1;
-    }
-
+    let word = this.querySelector("span.wordcontent").innerText;
+    playwordind(word);
 }
 
 var soundAllowed = function (stream) {
@@ -143,19 +109,15 @@ var soundNotAllowed = function (error) {
     console.log(error);
 }
 
-function updateHbuttonText() {
-    hbutton.innerText = ttsActive ? "Deactivate TTS" : "Activate TTS";
-}
-
 //function for onclick of hear pronunciation button
 hbutton.onclick = function () {
-    if (ttsActive) {
-        ttsActive = false;
-        updateHbuttonText();
+    let reftextvalCurrent = reftext.value.trim();
+    if ((reftextvalPrevious == reftextvalCurrent) && objectUrlMain) {
+        // audio already exists
+        reftextAudio.currentTime = 0;
+        reftextAudio.play();
         return;
     }
-
-    let reftextval = reftext.value;
 
     document.getElementById("ttsloader").style.display = "block";
 
@@ -165,21 +127,19 @@ hbutton.onclick = function () {
 
     // Callback function for when request completes
     request.onload = () => {
-        ttsActive = true;
-        updateHbuttonText();
+        reftextvalPrevious = reftextvalCurrent;
         var blobpronun = request.response;
         objectUrlMain = URL.createObjectURL(blobpronun);
-        hearingAudio.autoplay = true;
-        hearingAudio.src = objectUrlMain;
+        reftextAudio.autoplay = true;
+        reftextAudio.src = objectUrlMain;
         document.getElementById("ttsloader").style.display = "none";
     }
     const dat = new FormData();
-    dat.append("reftext", reftextval);
+    dat.append("reftext", reftextvalCurrent);
 
     //send request
+    objectUrlMain = undefined;
     request.send(dat);
-
-    lastgettstext = reftextval;
 
     return false;
 }
@@ -247,25 +207,35 @@ document.getElementById('buttonmic').onclick = function () {
 
 
 function fillDetails(words) {
-    for (var wi in words) {
-        var w = words[wi];
-        var countp = 0;
+    function createWordSpan(word) {
+        let ret = document.createElement('span');
+        ret.className = 'wordcontent';
+        ret.innerText = word;
+        return ret;
+    }
+
+    for (let wi in words) {
+        let w = words[wi];
+        let countp = 0;
 
         if (w.ErrorType == "Omission") {
             omittedwords += w.Word;
             omittedwords += ', ';
 
-            var tdda = document.createElement('td');
+            let tdda = document.createElement('td');
             tdda.innerText = '-';
+            tdda.style.backgroundColor = "orange";
             phonemerow.appendChild(tdda);
 
-            var tddb = document.createElement('td');
+            let tddb = document.createElement('td');
             tddb.innerText = '-';
             scorerow.appendChild(tddb);
 
-            var tdw = document.createElement('td');
-            tdw.innerText = w.Word;
+            let tdw = document.createElement('td');
+            tdw.appendChild(createWordSpan(w.Word));
             tdw.style.backgroundColor = "orange";
+            tdw.style.cursor = "pointer";
+            tdw.onclick = handleWordClick;
             wordrow.appendChild(tdw);
         }
         else if (w.ErrorType == "Insertion") {
@@ -273,10 +243,10 @@ function fillDetails(words) {
             insertedwords += ', ';
         }
         else if (w.ErrorType == "None" || w.ErrorType == "Mispronunciation") {
-            for (var phonei in w.Phonemes) {
+            for (let phonei in w.Phonemes) {
                 var p = w.Phonemes[phonei]
 
-                var tdp = document.createElement('td');
+                let tdp = document.createElement('td');
                 tdp.innerText = p.Phoneme;
                 if (p.AccuracyScore >= phthreshold1) {
                     tdp.style.backgroundColor = "green";
@@ -292,15 +262,16 @@ function fillDetails(words) {
                 }
                 phonemerow.appendChild(tdp);
 
-                var tds = document.createElement('td');
+                let tds = document.createElement('td');
                 tds.innerText = p.AccuracyScore;
                 scorerow.appendChild(tds);
                 countp = Number(phonei) + 1;
             }
-            var tdw = document.createElement('td');
-            tdw.innerText = w.Word;
-            var x = document.createElement("SUP");
-            var t = document.createTextNode(w.AccuracyScore);
+            let tdw = document.createElement('td');
+            tdw.appendChild(createWordSpan(w.Word));
+            tdw.onclick = handleWordClick;
+            let x = document.createElement("SUP");
+            let t = document.createTextNode(w.AccuracyScore);
             x.appendChild(t);
             tdw.appendChild(x);
             tdw.colSpan = countp;
@@ -310,6 +281,7 @@ function fillDetails(words) {
             else {
                 tdw.style.backgroundColor = "red";
             }
+            tdw.style.cursor = "pointer";
             wordrow.appendChild(tdw);
         }
 
@@ -331,13 +303,14 @@ function fillData(data) {
         wordsinserted.style.display = "block";
         wordsinserted.innerText = insertedwords;
     }
+
+    document.getElementById("footeralert").style.display = "block";
 }
 
 function createDownloadLink(blob) {
 
     document.getElementById("recordloader").style.display = "block";
 
-    document.getElementById("footeralert").style.display = "none";
     var url = URL.createObjectURL(blob);
     var au = document.createElement('audio');
     var li = document.createElement('p');

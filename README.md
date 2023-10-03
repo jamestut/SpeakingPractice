@@ -23,10 +23,10 @@ python3 -m flask run
 # Usage
 
 1. Once the backend is running, open the frontend in a web browser.
-2. Enter a reference word, sentence, or paragraph in the text area.
+2. Enter a reference word, sentence, or paragraph in the text area. You can press the **Speak** button to read aloud the entered reference text.
 3. Press the **Record** button, and then read aloud the reference text from the previous step.
 4. There is no automatic silence or end-of-speech detection. Press **Stop** button to stop the recording and upload the recorded voice to Azure Cognitive Speech service. After a while, your speaking scores will be shown on the bottom of the screen.
-5. Press the **Start TTS** button to read aloud the reference text. Click on an individual word in the text area to read only that particular word slowly.
+5. Once the speaking scores are shown, you can click on the individual words at the top of the scoring table to hear them.
 
 Use macOS' settings to configure the voice used for text to speech.
 
