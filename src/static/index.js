@@ -130,8 +130,8 @@ hbutton.onclick = function () {
         reftextvalPrevious = reftextvalCurrent;
         var blobpronun = request.response;
         objectUrlMain = URL.createObjectURL(blobpronun);
-        reftextAudio.autoplay = true;
         reftextAudio.src = objectUrlMain;
+        reftextAudio.play();
         document.getElementById("ttsloader").style.display = "none";
     }
     const dat = new FormData();
